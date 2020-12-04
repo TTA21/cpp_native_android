@@ -5,6 +5,7 @@
 #include <android/log.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../SDL/src/core/android/SDL_android.h"
 
 SDL_Texture* CriarImagem(const char* Source, SDL_Renderer * Render){
 
@@ -65,6 +66,23 @@ int SDL_main(int argc, char **argv)
 
     //__android_log_print(ANDROID_LOG_INFO, "SDL", "SDL_Success: %s\n", SDL_GetError());
 
+    char accelString1[60];
+    char accelString2[60];
+    char accelString3[60];
+
+    char accelBUFF1[60];
+    char accelBUFF2[60];
+    char accelBUFF3[60];
+
+    float accelValues[3];
+    Android_JNI_GetAccelerometerValues(accelValues);
+    sprintf(accelString1, "%f", (accelValues[0]*10)*(accelValues[0]*10));
+    sprintf(accelString2, "%f", (accelValues[1]*10)*(accelValues[1]*10));
+    sprintf(accelString3, "%f", (accelValues[2]*10)*(accelValues[2]*10));
+
+    strcpy( accelBUFF1 , accelString1 );
+    strcpy( accelBUFF2 , accelString2 );
+    strcpy( accelBUFF3 , accelString3 );
 
     while (!done) {
 
@@ -77,6 +95,36 @@ int SDL_main(int argc, char **argv)
                 SDL_RenderCopy( ren , tex , NULL , NULL );
             }
         }
+
+        float new_accel[3];
+
+        new_accel[0] = accelValues[0]*1000;
+        new_accel[1] = accelValues[1]*1000;
+        new_accel[2] = accelValues[2]*1000;;
+
+        Android_JNI_GetAccelerometerValues(accelValues);
+        sprintf(accelString1, "%f", new_accel[0] );    ///0 when level with earth |____|
+        sprintf(accelString2, "%f", new_accel[1] );    ///0 when flat  ____
+        sprintf(accelString3, "%f", new_accel[2] );    ///0 when upright   ||||
+
+
+
+        if( strcmp( accelString1 , accelBUFF1 ) != 0 ){
+            //__android_log_print(ANDROID_LOG_INFO, "accelValues[0]", "%s", accelString1);
+        }
+
+        if( strcmp( accelString2 , accelBUFF2 ) != 0 ){
+            //__android_log_print(ANDROID_LOG_INFO, "accelValues[1]", "%s", accelString2);
+        }
+
+        if( strcmp( accelString3 , accelBUFF3 ) != 0 ){
+            __android_log_print(ANDROID_LOG_INFO, "accelValues[2]", "%s", accelString3);
+        }
+
+        strcpy( accelBUFF1 , accelString1 );
+        strcpy( accelBUFF2 , accelString2 );    ///Copy
+        strcpy( accelBUFF3 , accelString3 );
+
 
         int point1[2];
         point1[0] = normalize_coordinate_X( rand() % 2560 );
@@ -91,9 +139,22 @@ int SDL_main(int argc, char **argv)
 
         ///Stuff
         SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
-        SDL_RenderDrawTriangle( ren , point1 , point2 , point3 );
+        //SDL_RenderDrawTriangle( ren , point1 , point2 , point3 );
+
+        int int_accel[3];
+        int_accel[0] = new_accel[0];
+        int_accel[1] = new_accel[1];
+        int_accel[2] = new_accel[2];
+        SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[0]+750 , 750 );
+        SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , 750 , int_accel[1]+750 );
+        SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
+        //SDL_RenderDrawLine( ren , 1000 , 1000 , int_accel[2] * 10 , int_accel[2] * 10 );
 
         SDL_RenderPresent(ren);
+
     }
 
     SDL_DestroyRenderer(ren);
