@@ -36,6 +36,13 @@ android {
             //     abiFilters 'arm64-v8a'
             // }
         }
+
+        ndk {
+            moduleName "myModuleName"
+            stl "stlport_shared"
+            //Line above really to update intellisense
+        }
+
     }
     buildTypes {
         release {

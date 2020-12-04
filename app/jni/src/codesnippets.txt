@@ -1,0 +1,101 @@
+Setup
+
+Build.Gradle --
+
+    ndk {
+        moduleName "myModuleName"
+        stl "stlport_shared"
+        //Line above really to update intellisense
+     }
+
+     https://stackoverflow.com/questions/4893403/cant-include-c-headers-like-vector-in-android-ndk
+---
+
+Android.mk --
+
+APP_STL                 := stlport_shared
+
+    ///If it doesnt work change from shared to static
+
+    https://stackoverflow.com/questions/4893403/cant-include-c-headers-like-vector-in-android-ndk
+
+---
+
+main.cpp --
+
+#ifdef __cplusplus
+extern "C" {    ///To get the stl libs
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+-----
+
+
+//////////////////////////
+
+        3 lines of sensors
+
+        int int_accel[3];
+        int_accel[0] = accelValues[0]*1000;
+        int_accel[1] = accelValues[1]*1000;
+        int_accel[2] = accelValues[2]*1000;
+        SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[0]+750 , 750 );
+        SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , 750 , int_accel[1]+750 );
+        SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
+
+/////////////////////////
+
+/////////////////////////
+
+        Sideways looking sensors
+
+        int int_accel[3];
+        int_accel[0] = accelValues[0]*1000;
+        int_accel[1] = accelValues[1]*1000;
+        int_accel[2] = accelValues[2]*1000;
+
+        SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , -int_accel[2] + 750 , -int_accel[1] + 750 );
+        SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
+
+/////////////////////////
+
+/////////////////////////
+
+            Texture Importation
+
+            SDL_Texture *CriarImagem(const char *Source, SDL_Renderer *Render) {
+
+                SDL_Surface *img = SDL_LoadBMP(Source);
+                SDL_Texture *imagem = SDL_CreateTextureFromSurface(Render, img);
+                SDL_FreeSurface(img);
+
+                return imagem;
+            }
+
+            SDL_Texture *tex;
+            tex = CriarImagem("character.bmp", ren);
+            //C:\Users\USER\AndroidStudioProjects\android-project\app\src\main\assets\yourimage.bmp
+            if (tex == NULL)
+                __android_log_print(ANDROID_LOG_INFO, "SDL", "SDL_CreateImage: %s\n", SDL_GetError());
+            else
+                __android_log_print(ANDROID_LOG_INFO, "SDL", "SDL_Success: %s\n",
+                                    "Image created succesfully");
+
+        Event Handling
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN ||
+                event.type == SDL_FINGERDOWN) {
+                SDL_RenderCopy(ren, tex, NULL, NULL);
+            }
+        }
+
+/////////////////////////
