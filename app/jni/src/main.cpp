@@ -123,9 +123,12 @@ int SDL_main(int argc, char **argv) {
 
     Create_Cube();
 
-    mat4x4 matRotZ, matRotX;
+    mat4x4 matRotZ, matRotX , matRotY;
+    float accelValues[3];
 
     while (!done) {
+
+        Android_JNI_GetAccelerometerValues(accelValues);
 
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
@@ -134,25 +137,76 @@ int SDL_main(int argc, char **argv) {
 
         fTheta += 0.01f;
 
+        /*
         // Rotation Z
-        matRotZ.m[0][0] = cosf(fTheta);
-        matRotZ.m[0][1] = sinf(fTheta);
-        matRotZ.m[1][0] = -sinf(fTheta);
-        matRotZ.m[1][1] = cosf(fTheta);
+        matRotZ.m[0][0] = cosf( fTheta );
+        matRotZ.m[0][1] = sinf( fTheta );
+        matRotZ.m[1][0] = -sinf( fTheta );
+        matRotZ.m[1][1] = cosf( fTheta );
         matRotZ.m[2][2] = 1;
         matRotZ.m[3][3] = 1;
 
         // Rotation X
         matRotX.m[0][0] = 1;
-        matRotX.m[1][1] = cosf(fTheta * 0.5f);
-        matRotX.m[1][2] = sinf(fTheta * 0.5f);
-        matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-        matRotX.m[2][2] = cosf(fTheta * 0.5f);
+        matRotX.m[1][1] = cosf( fTheta );
+        matRotX.m[1][2] = sinf( fTheta );
+        matRotX.m[2][1] = -sinf( fTheta );
+        matRotX.m[2][2] = cosf( fTheta );
         matRotX.m[3][3] = 1;
+
+        //RotationY
+        matRotY.m[0][0] = cosf( fTheta );
+        matRotY.m[0][2] = sinf( fTheta );
+        matRotY.m[1][1] = 1;
+        matRotY.m[1][1] = -sinf( fTheta );
+        matRotY.m[2][2] = cosf( fTheta );
+         */
+
+        // Rotation Z
+        matRotZ.m[0][0] = cosf( accelValues[0]*2 );
+        matRotZ.m[0][1] = sinf( accelValues[0]*2 );
+        matRotZ.m[1][0] = -sinf( accelValues[0]*2 );
+        matRotZ.m[1][1] = cosf( accelValues[0]*2 );
+        matRotZ.m[2][2] = 1;
+        matRotZ.m[3][3] = 1;
+
+        // Rotation X
+        matRotX.m[0][0] = 1;
+        matRotX.m[1][1] = cosf( accelValues[1]*2 );
+        matRotX.m[1][2] = sinf( accelValues[1]*2 );
+        matRotX.m[2][1] = -sinf( accelValues[1]*2 );
+        matRotX.m[2][2] = cosf( accelValues[1]*2 );
+        matRotX.m[3][3] = 1;
+
+        //RotationY
+        matRotY.m[0][0] = cosf( accelValues[2]*2 );
+        matRotY.m[0][2] = sinf( accelValues[2]*2 );
+        matRotY.m[1][1] = 1;
+        matRotY.m[1][1] = -sinf( accelValues[2]*2 );
+        matRotY.m[2][2] = cosf( accelValues[2]*2 );
 
 
         for (auto tri : meshCube.tris)
         {
+
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN ||
+                    event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION ) {
+
+                    int int_accel[3];
+                    int_accel[0] = accelValues[0]*1000;
+                    int_accel[1] = accelValues[1]*1000;
+                    int_accel[2] = accelValues[2]*1000;
+                    SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
+                    SDL_RenderDrawLine( ren , 750 , 750 , int_accel[0]+750 , 750 );
+                    SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+                    SDL_RenderDrawLine( ren , 750 , 750 , 750 , int_accel[1]+750 );
+                    SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+                    SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
+
+                }
+            }
 
             triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
 

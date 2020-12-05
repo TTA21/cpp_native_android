@@ -38,6 +38,9 @@ extern "C" {    ///To get the stl libs
 
         3 lines of sensors
 
+        float accelValues[3];
+           Android_JNI_GetAccelerometerValues(accelValues);
+
         int int_accel[3];
         int_accel[0] = accelValues[0]*1000;
         int_accel[1] = accelValues[1]*1000;
