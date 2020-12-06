@@ -5,86 +5,13 @@
 #include "../SDL/src/core/android/SDL_android.h"
 #include <vector>           ///Doesnt see it for some reason
 #include <SDL.h>
-
-using namespace std;
+#include "data_structures.h"
+#include "lin_alg.h"
+#include <algorithm>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-const uint32_t WINDOW_WIDTH = 2560;
-const uint32_t WINDOW_HEIGHT = 1550;
-
-struct vec3d {float x, y, z;};
-struct triangle {vec3d p[3];};
-struct mesh {std::vector <triangle> tris;};
-struct mat4x4 {float m[4][4] = {0};};
-
-struct mesh meshCube;
-struct mat4x4 matProj;
-
-float fTheta;
-
-void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m)
-{
-    o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + m.m[3][0];
-    o.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z * m.m[2][1] + m.m[3][1];
-    o.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z * m.m[2][2] + m.m[3][2];
-    float w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z * m.m[2][3] + m.m[3][3];
-
-    if (w != 0.0f)
-    {
-        o.x /= w; o.y /= w; o.z /= w;
-    }
-}
-void Create_Cube(){
-    meshCube.tris = {
-
-            // SOUTH
-            { 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-            // EAST
-            { 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
-
-            // NORTH
-            { 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
-
-            // WEST
-            { 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
-
-            // TOP
-            { 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
-
-            // BOTTOM
-            { 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
-            { 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-    };
-
-    // Projection Matrix
-    float fNear = 0.1f;
-    float fFar = 1000.0f;
-    float fFov = 90.0f;
-    float fAspectRatio = (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
-    float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
-
-    matProj.m[0][0] = fAspectRatio * fFovRad;
-    matProj.m[1][1] = fFovRad;
-    matProj.m[2][2] = fFar / (fFar - fNear);
-    matProj.m[3][2] = (-fFar * fNear) / (fFar - fNear);
-    matProj.m[2][3] = 1.0f;
-    matProj.m[3][3] = 0.0f;
-
-}
-
-int normalize_coordinate_X(int x) { return (WINDOW_WIDTH / 2) + x; }
-
-int normalize_coordinate_Y(int y) { return (WINDOW_HEIGHT / 2) + y; }
 
 void SDL_RenderDrawTriangle(SDL_Renderer *ren   ,
                             int X1 , int Y1     ,
@@ -99,6 +26,7 @@ void SDL_RenderDrawTriangle(SDL_Renderer *ren   ,
 }
 
 int SDL_main(int argc, char **argv) {
+
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
 
@@ -123,6 +51,12 @@ int SDL_main(int argc, char **argv) {
 
     Create_Cube();
 
+    meshCube.file_readLine( "teapot.obj" );
+    __android_log_print(ANDROID_LOG_DEBUG, "MESH", "MESH ALERT: %s\n", "Finished getting mesh");
+
+
+
+
     mat4x4 matRotZ, matRotX , matRotY;
     float accelValues[3];
 
@@ -133,58 +67,11 @@ int SDL_main(int argc, char **argv) {
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
 
-        // Set up rotation matrices
+        Rotate_Z( matRotZ , accelValues[0] );
+        Rotate_X( matRotX , accelValues[1] + 90 );
+        Rotate_Y( matRotY , accelValues[2] + 90 );
 
-        fTheta += 0.01f;
-
-        /*
-        // Rotation Z
-        matRotZ.m[0][0] = cosf( fTheta );
-        matRotZ.m[0][1] = sinf( fTheta );
-        matRotZ.m[1][0] = -sinf( fTheta );
-        matRotZ.m[1][1] = cosf( fTheta );
-        matRotZ.m[2][2] = 1;
-        matRotZ.m[3][3] = 1;
-
-        // Rotation X
-        matRotX.m[0][0] = 1;
-        matRotX.m[1][1] = cosf( fTheta );
-        matRotX.m[1][2] = sinf( fTheta );
-        matRotX.m[2][1] = -sinf( fTheta );
-        matRotX.m[2][2] = cosf( fTheta );
-        matRotX.m[3][3] = 1;
-
-        //RotationY
-        matRotY.m[0][0] = cosf( fTheta );
-        matRotY.m[0][2] = sinf( fTheta );
-        matRotY.m[1][1] = 1;
-        matRotY.m[1][1] = -sinf( fTheta );
-        matRotY.m[2][2] = cosf( fTheta );
-         */
-
-        // Rotation Z
-        matRotZ.m[0][0] = cosf( accelValues[0]*2 );
-        matRotZ.m[0][1] = sinf( accelValues[0]*2 );
-        matRotZ.m[1][0] = -sinf( accelValues[0]*2 );
-        matRotZ.m[1][1] = cosf( accelValues[0]*2 );
-        matRotZ.m[2][2] = 1;
-        matRotZ.m[3][3] = 1;
-
-        // Rotation X
-        matRotX.m[0][0] = 1;
-        matRotX.m[1][1] = cosf( accelValues[1]*2 );
-        matRotX.m[1][2] = sinf( accelValues[1]*2 );
-        matRotX.m[2][1] = -sinf( accelValues[1]*2 );
-        matRotX.m[2][2] = cosf( accelValues[1]*2 );
-        matRotX.m[3][3] = 1;
-
-        //RotationY
-        matRotY.m[0][0] = cosf( accelValues[2]*2 );
-        matRotY.m[0][2] = sinf( accelValues[2]*2 );
-        matRotY.m[1][1] = 1;
-        matRotY.m[1][1] = -sinf( accelValues[2]*2 );
-        matRotY.m[2][2] = cosf( accelValues[2]*2 );
-
+        std::vector<triangle> vecTrianglesToRaster;
 
         for (auto tri : meshCube.tris)
         {
@@ -208,46 +95,72 @@ int SDL_main(int argc, char **argv) {
                 }
             }
 
-            triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
+            triangle triProjected, triTranslated;
 
-            // Rotate in Z-Axis
-            MultiplyMatrixVector(tri.p[0], triRotatedZ.p[0], matRotZ);
-            MultiplyMatrixVector(tri.p[1], triRotatedZ.p[1], matRotZ);
-            MultiplyMatrixVector(tri.p[2], triRotatedZ.p[2], matRotZ);
-
-            // Rotate in X-Axis
-            MultiplyMatrixVector(triRotatedZ.p[0], triRotatedZX.p[0], matRotX);
-            MultiplyMatrixVector(triRotatedZ.p[1], triRotatedZX.p[1], matRotX);
-            MultiplyMatrixVector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
+            Apply_Transformation( tri , tri , matRotZ );    ///Rotate on z
+            Apply_Transformation( tri , tri , matRotX );    ///Rotate on x
+            Apply_Transformation( tri , tri , matRotY );    ///Rotate on y , sensor failure
 
             // Offset into the screen
-            triTranslated = triRotatedZX;
-            triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
-            triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
-            triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+            triTranslated = tri;
+            triTranslated.p[0].z = tri.p[0].z + 5.0f;
+            triTranslated.p[1].z = tri.p[1].z + 5.0f;
+            triTranslated.p[2].z = tri.p[2].z + 5.0f;
 
-            // Project triangles from 3D --> 2D
-            MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-            MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
-            MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+            // Use Cross-Product to get surface normal
+            vec3d normal;
+            Cross_Normal( normal , triTranslated );
 
-            // Scale into view
-            triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
-            triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
-            triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
-            triProjected.p[0].x *= 0.5f * (float)WINDOW_WIDTH;
-            triProjected.p[0].y *= 0.5f * (float)WINDOW_HEIGHT;
-            triProjected.p[1].x *= 0.5f * (float)WINDOW_WIDTH;
-            triProjected.p[1].y *= 0.5f * (float)WINDOW_HEIGHT;
-            triProjected.p[2].x *= 0.5f * (float)WINDOW_WIDTH;
-            triProjected.p[2].y *= 0.5f * (float)WINDOW_HEIGHT;
+            // It's normally normal to normalise the normal
+            float l = sqrtf(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
+            normal.x /= l; normal.y /= l; normal.z /= l;
 
+            if(Cross_View( normal , triTranslated.p[0] ) < 0.0f) {
+
+                // Project triangles from 3D --> 2D
+                Apply_Transformation( triTranslated , triProjected , matProj ); ///ERR
+
+                // Scale into view
+                triProjected.p[0].x += 1.0f;
+                triProjected.p[0].y += 1.0f;
+                triProjected.p[1].x += 1.0f;
+                triProjected.p[1].y += 1.0f;
+                triProjected.p[2].x += 1.0f;
+                triProjected.p[2].y += 1.0f;
+                triProjected.p[0].x *= 0.5f * (float) WINDOW_WIDTH;
+                triProjected.p[0].y *= 0.5f * (float) WINDOW_HEIGHT;
+                triProjected.p[1].x *= 0.5f * (float) WINDOW_WIDTH;
+                triProjected.p[1].y *= 0.5f * (float) WINDOW_HEIGHT;
+                triProjected.p[2].x *= 0.5f * (float) WINDOW_WIDTH;
+                triProjected.p[2].y *= 0.5f * (float) WINDOW_HEIGHT;
+
+                //SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
+
+                //SDL_RenderDrawTriangle(ren, triProjected.p[0].x, triProjected.p[0].y,
+                //                       triProjected.p[1].x, triProjected.p[1].y,
+                //                       triProjected.p[2].x, triProjected.p[2].y);
+
+                vecTrianglesToRaster.push_back(triProjected);
+
+            }
+
+        }
+
+        // Sort triangles from back to front
+        sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle &t1, triangle &t2)
+        {
+            float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+            float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+            return z1 > z2;
+        });
+
+        for (auto &triProjected : vecTrianglesToRaster)
+        {
             SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
 
-            SDL_RenderDrawTriangle( ren ,   triProjected.p[0].x, triProjected.p[0].y,
-                                            triProjected.p[1].x, triProjected.p[1].y,
-                                            triProjected.p[2].x, triProjected.p[2].y        );
-
+            SDL_RenderDrawTriangle(ren, triProjected.p[0].x, triProjected.p[0].y,
+                                   triProjected.p[1].x, triProjected.p[1].y,
+                                   triProjected.p[2].x, triProjected.p[2].y);
         }
 
         SDL_RenderPresent(ren);
