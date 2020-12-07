@@ -12,6 +12,7 @@
 #include "data_structures.h"
 #include "lin_alg.h"
 #include <algorithm>
+#include <string>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,7 +61,43 @@ int SDL_main(int argc, char **argv) {
     mat4x4 matRotZ, matRotX , matRotY;
     float accelValues[3];
 
+    long finger_coord_X = 0 , finger_coord_Y = 0;
+    float finger_rotation_X = 1 , finger_rotation_Y = 1 , finger_rotation_Z = 1 , finger_distance = 5;    ///Min distance is 5
+
     while (!done) {
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if ( event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION ) {
+
+                if( event.tfinger.x * WINDOW_WIDTH > finger_coord_X ){  ///Going right
+                    finger_rotation_Y += 0.02;
+                }else{                                                  ///Going left
+                    finger_rotation_Y -= 0.02;
+                }
+
+                if( event.tfinger.y * WINDOW_HEIGHT > finger_coord_Y ){  ///Going right
+                    finger_rotation_X -= 0.02;
+                }else{                                                  ///Going left
+                    finger_rotation_X += 0.02;
+                }
+
+                finger_coord_X = event.tfinger.x * WINDOW_WIDTH;
+                finger_coord_Y = event.tfinger.y * WINDOW_HEIGHT;
+
+            }else if( event.type == SDL_MULTIGESTURE ){
+
+                finger_rotation_Z += event.mgesture.dTheta * 2;
+
+                finger_distance -= event.mgesture.dDist * 100;
+
+                if( finger_distance < 5 ){
+                    finger_distance = 5;
+                }
+
+            }
+        }
+
 
         Android_JNI_GetAccelerometerValues(accelValues);
 
@@ -70,6 +107,10 @@ int SDL_main(int argc, char **argv) {
         Rotate_Z( matRotZ , accelValues[0] );
         Rotate_X( matRotX , accelValues[1] + 90 );
         Rotate_Y( matRotY , accelValues[2] + 90 );
+
+        Rotate_Z( matRotZ , finger_rotation_Z + 90 );
+        Rotate_X( matRotX , finger_rotation_X + 90 );
+        Rotate_Y( matRotY , finger_rotation_Y + 90 );
 
         std::vector<triangle> vecTrianglesToRaster;
 
@@ -84,9 +125,9 @@ int SDL_main(int argc, char **argv) {
 
             // Offset into the screen
             triTranslated = tri;
-            triTranslated.p[0].z = tri.p[0].z + 5.0f;
-            triTranslated.p[1].z = tri.p[1].z + 5.0f;
-            triTranslated.p[2].z = tri.p[2].z + 5.0f;
+            triTranslated.p[0].z = tri.p[0].z + finger_distance;
+            triTranslated.p[1].z = tri.p[1].z + finger_distance;
+            triTranslated.p[2].z = tri.p[2].z + finger_distance;
 
             // Use Cross-Product to get surface normal
             vec3d normal;
