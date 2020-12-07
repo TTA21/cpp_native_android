@@ -79,4 +79,14 @@ float Cross_View( vec3d normal , vec3d p ){
 
 }
 
+float Find_Brightness( vec3d &light_direction , vec3d &normal ){
+
+    float l = sqrtf(light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z);
+    light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
+
+    // How similar is normal to light direction
+    return normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
+
+}
+
 #endif //ANDROID_PROJECT_LIN_ALG_H

@@ -1,4 +1,8 @@
 //#include <SDL.h>
+
+///Thank god for OLC[javidx9] for teaching me 3D projection!  https://www.youtube.com/channel/UC-yuWVUplUJZvieEligKBkA
+///                                                           https://github.com/OneLoneCoder
+
 #include <android/log.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -25,6 +29,7 @@ void SDL_RenderDrawTriangle(SDL_Renderer *ren   ,
 
 }
 
+
 int SDL_main(int argc, char **argv) {
 
     SDL_Window *win = 0;
@@ -49,13 +54,8 @@ int SDL_main(int argc, char **argv) {
         return 1;
     }
 
-    Create_Cube();
-
-    meshCube.file_readLine( "teapot.obj" );
-    __android_log_print(ANDROID_LOG_DEBUG, "MESH", "MESH ALERT: %s\n", "Finished getting mesh");
-
-
-
+    Create_Projection_matrix();
+    meshCube.load_obj( "teapot.obj" );
 
     mat4x4 matRotZ, matRotX , matRotY;
     float accelValues[3];
@@ -75,25 +75,6 @@ int SDL_main(int argc, char **argv) {
 
         for (auto tri : meshCube.tris)
         {
-
-            SDL_Event event;
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN ||
-                    event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION ) {
-
-                    int int_accel[3];
-                    int_accel[0] = accelValues[0]*1000;
-                    int_accel[1] = accelValues[1]*1000;
-                    int_accel[2] = accelValues[2]*1000;
-                    SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
-                    SDL_RenderDrawLine( ren , 750 , 750 , int_accel[0]+750 , 750 );
-                    SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
-                    SDL_RenderDrawLine( ren , 750 , 750 , 750 , int_accel[1]+750 );
-                    SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
-                    SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
-
-                }
-            }
 
             triangle triProjected, triTranslated;
 
@@ -117,6 +98,10 @@ int SDL_main(int argc, char **argv) {
 
             if(Cross_View( normal , triTranslated.p[0] ) < 0.0f) {
 
+                // Illumination
+                vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+                triProjected.color = Find_Brightness( light_direction , normal );
+
                 // Project triangles from 3D --> 2D
                 Apply_Transformation( triTranslated , triProjected , matProj ); ///ERR
 
@@ -134,12 +119,6 @@ int SDL_main(int argc, char **argv) {
                 triProjected.p[2].x *= 0.5f * (float) WINDOW_WIDTH;
                 triProjected.p[2].y *= 0.5f * (float) WINDOW_HEIGHT;
 
-                //SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
-
-                //SDL_RenderDrawTriangle(ren, triProjected.p[0].x, triProjected.p[0].y,
-                //                       triProjected.p[1].x, triProjected.p[1].y,
-                //                       triProjected.p[2].x, triProjected.p[2].y);
-
                 vecTrianglesToRaster.push_back(triProjected);
 
             }
@@ -156,11 +135,12 @@ int SDL_main(int argc, char **argv) {
 
         for (auto &triProjected : vecTrianglesToRaster)
         {
-            SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
 
+            SDL_SetRenderDrawColor(ren, 0, 255 * triProjected.color , 0, 255);
             SDL_RenderDrawTriangle(ren, triProjected.p[0].x, triProjected.p[0].y,
                                    triProjected.p[1].x, triProjected.p[1].y,
                                    triProjected.p[2].x, triProjected.p[2].y);
+
         }
 
         SDL_RenderPresent(ren);

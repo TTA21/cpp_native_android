@@ -102,3 +102,30 @@ extern "C" {    ///To get the stl libs
         }
 
 /////////////////////////
+
+
+/////////////////////////
+
+    Accelerometer helper
+
+                SDL_Event event;
+                while (SDL_PollEvent(&event)) {
+                    if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN ||
+                        event.type == SDL_FINGERDOWN || event.type == SDL_FINGERMOTION ) {
+
+                        int int_accel[3];
+                        int_accel[0] = accelValues[0]*1000;
+                        int_accel[1] = accelValues[1]*1000;
+                        int_accel[2] = accelValues[2]*1000;
+                        SDL_SetRenderDrawColor(ren, 0, 255, 0, 255);
+                        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[0]+750 , 750 );
+                        SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+                        SDL_RenderDrawLine( ren , 750 , 750 , 750 , int_accel[1]+750 );
+                        SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+                        SDL_RenderDrawLine( ren , 750 , 750 , int_accel[2] + 750 , int_accel[2] + 750 );
+
+                    }
+                }
+
+
+/////////////////////////

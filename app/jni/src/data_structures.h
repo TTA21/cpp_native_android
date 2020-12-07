@@ -15,16 +15,16 @@ const uint32_t WINDOW_WIDTH = 2560;
 const uint32_t WINDOW_HEIGHT = 1550;
 
 struct vec3d {float x, y, z;};
-struct triangle {vec3d p[3];};
+struct triangle {
+    vec3d p[3];
+
+    float color;
+
+};
 struct mesh {
     std::vector <triangle> tris;
 
-    bool LoadFromObjectFile(std::string sFilename)
-    {
-        file_read( sFilename.c_str() );
-
-    }
-
+private:
     std::string file_read(const char* filename) {
         SDL_RWops *rw = SDL_RWFromFile(filename, "rb");
         if (rw == NULL) return NULL;
@@ -50,6 +50,12 @@ struct mesh {
 
     }
 
+public:
+    void load_obj( const char* filename ){
+        file_readLine( filename );
+    }
+
+private:
     void file_readLine(const char* filename) {
 
         std::string stuff = file_read(filename);
@@ -115,14 +121,6 @@ struct mesh {
             s >> junk >> f[0] >> f[1] >> f[2];
             tris.push_back({ verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1] });
 
-            std::string position;
-            position = "x: " + std::to_string(tris.end()->p->x) + " ";
-            position = "y: " + std::to_string(tris.end()->p->y) + " ";
-            position = "z: " + std::to_string(tris.end()->p->z) + " ";
-
-
-            __android_log_print(ANDROID_LOG_DEBUG, "TRIS", "TRIS VAL: %s\n", position.c_str());
-
         }
 
     }
@@ -144,7 +142,7 @@ struct mesh meshCube;
 struct mat4x4 matProj;
 vec3d vCamera;
 
-void Create_Cube(){
+void Create_Projection_matrix(){
     /*meshCube.tris = {
 
             // SOUTH
